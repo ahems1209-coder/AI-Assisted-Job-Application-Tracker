@@ -4,11 +4,10 @@ import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// All application routes should be protected
-router.use(protect); 
+router.use(protect); // Secures all routes below
 
 router.get('/', getApplications);
 router.post('/', createApplication);
-router.post('/parse', parseAI); // The endpoint for the AI button
+router.post('/parse', parseAI); 
 
 export default router;
