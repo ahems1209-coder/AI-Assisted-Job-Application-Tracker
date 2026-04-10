@@ -1,17 +1,10 @@
 import  { useState } from 'react';
 import axiosInstance from '../api/axiosInstance';
 
-interface FormData {
-  company: string;
-  role: string;
-  location: string;
-  salary: string;
-}
-
 const AddApplicationModal = () => {
   const [jobDescription, setJobDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     company: "",
     role: "",
     location: "",
@@ -19,47 +12,61 @@ const AddApplicationModal = () => {
   });
 
   const handleAutoFill = async () => {
-    if (!jobDescription) return alert("Paste a description first!");
+    if (!jobDescription.trim()) return alert("Please paste a description!");
+
     setLoading(true);
     try {
-      const { data } = await axiosInstance.post('/applications/parse', { 
+      // Sending EXACTLY { "description": "text" }
+      const response = await axiosInstance.post('/applications/parse', { 
         description: jobDescription 
       });
+
+      const { company, role, location, salary } = response.data;
       
       setFormData({
-        company: data.company || "",
-        role: data.role || "",
-        location: data.location || "",
-        salary: data.salary || ""
+        company: company || "",
+        role: role || "",
+        location: location || "",
+        salary: salary || ""
       });
-    } catch (err) {
-      console.error(err);
-      alert("AI failed. Check if GROQ_API_KEY is set in Railway Variables.");
+    } catch (error: any) {
+      console.error("Autofill error:", error.response?.data || error.message);
+      alert("Failed to parse. Check the console for details.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 bg-gray-900 text-white rounded-xl">
-      <textarea 
+    <div className="p-4 bg-gray-900 rounded-lg">
+      <textarea
+        className="w-full p-2 bg-gray-800 text-white rounded"
+        rows={6}
+        placeholder="Paste job description here..."
         value={jobDescription}
         onChange={(e) => setJobDescription(e.target.value)}
-        placeholder="Paste job description here..."
-        className="w-full p-3 bg-gray-800 rounded-md mb-4"
-        rows={5}
       />
-      <button 
-        onClick={handleAutoFill} 
+      <button
+        onClick={handleAutoFill}
         disabled={loading}
-        className="w-full py-2 bg-blue-600 rounded-md font-bold mb-6"
+        className="w-full mt-2 bg-blue-600 py-2 rounded font-bold text-white disabled:bg-gray-600"
       >
-        {loading ? "AI is Analyzing..." : "✨ Auto-fill with AI"}
+        {loading ? "AI Working..." : "Auto-fill with AI"}
       </button>
 
-      <div className="grid grid-cols-2 gap-4">
-        <input value={formData.company} placeholder="Company" className="p-2 bg-gray-800" readOnly />
-        <input value={formData.role} placeholder="Role" className="p-2 bg-gray-800" readOnly />
+      <div className="mt-4 grid grid-cols-1 gap-2">
+        <input 
+          className="p-2 bg-gray-700 text-white" 
+          placeholder="Company" 
+          value={formData.company} 
+          onChange={(e) => setFormData({...formData, company: e.target.value})}
+        />
+        <input 
+          className="p-2 bg-gray-700 text-white" 
+          placeholder="Role" 
+          value={formData.role} 
+          onChange={(e) => setFormData({...formData, role: e.target.value})}
+        />
       </div>
     </div>
   );
