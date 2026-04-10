@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
+  // Ensure this is your EXACT Railway URL
   baseURL: 'https://ai-assisted-job-application-tracker-production.up.railway.app/api',
 });
 
