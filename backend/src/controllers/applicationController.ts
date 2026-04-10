@@ -1,32 +1,40 @@
 import { Request, Response } from 'express';
 import Application from '../models/Application';
+import { parseJobWithAI } from '../services/ai.service';
 
-// GET ALL APPLICATIONS (Filtered by User)
-export const getApplications = async (req: any, res: Response) => {
+// AI Parsing Logic
+export const parseAI = async (req: any, res: Response) => {
   try {
-    // ONLY find applications where the user ID matches the logged-in user
-    const applications = await Application.find({ user: req.user.id });
-    res.json(applications);
+    const { description } = req.body;
+    if (!description) return res.status(400).json({ message: "Description required" });
+
+    const aiData = await parseJobWithAI(description);
+    res.json(aiData);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: "AI Error" });
   }
 };
 
-// CREATE NEW APPLICATION
+// Create Application (Now with User ID)
 export const createApplication = async (req: any, res: Response) => {
   try {
-    const { company, role, status } = req.body;
-
     const newApp = new Application({
-      company,
-      role,
-      status,
-      user: req.user.id // Assign the application to this specific user
+      ...req.body,
+      user: req.user.id // Critical for data isolation
     });
-
     const savedApp = await newApp.save();
     res.status(201).json(savedApp);
   } catch (error) {
-    res.status(500).json({ message: 'Error saving application' });
+    res.status(500).json({ message: "Save Error" });
+  }
+};
+
+// Get Applications (Now filtered by User)
+export const getApplications = async (req: any, res: Response) => {
+  try {
+    const apps = await Application.find({ user: req.user.id });
+    res.json(apps);
+  } catch (error) {
+    res.status(500).json({ message: "Fetch Error" });
   }
 };

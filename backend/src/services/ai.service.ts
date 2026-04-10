@@ -1,24 +1,25 @@
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY, // Make sure this matches Railway!
+  apiKey: process.env.GROQ_API_KEY, 
 });
 
-export const parseJobDescription = async (description: string) => {
+export const parseJobWithAI = async (description: string) => {
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       messages: [
         {
           role: "user",
-          content: `Extract job details: company, role, location, and salary from this text: "${description}". Return ONLY JSON.`,
+          content: `Extract: company, role, location, salary. Text: "${description}". Return JSON only. Format: {"company": "", "role": "", "location": "", "salary": ""}`,
         },
       ],
       model: "mixtral-8x7b-32768",
     });
 
-    return JSON.parse(chatCompletion.choices[0]?.message?.content || "{}");
+    const content = completion.choices[0]?.message?.content || "{}";
+    return JSON.parse(content);
   } catch (error) {
-    console.error("AI Parsing Error:", error);
-    throw new Error("AI failed to parse description");
+    console.error("Groq SDK Error:", error);
+    throw new Error("AI Parsing failed");
   }
 };

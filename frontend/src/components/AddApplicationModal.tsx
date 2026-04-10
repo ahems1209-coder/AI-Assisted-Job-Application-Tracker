@@ -1,85 +1,102 @@
-import { useState } from 'react';
-import API from '../api/axiosInstance';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import axiosInstance from '../api/axiosInstance';
 
-const AddApplicationModal = ({ isOpen, onClose, onRefresh }: any) => {
-  const [jdText, setJdText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ company: '', role: '', status: 'Applied' });
+// Define the shape of your form data
+interface FormData {
+  company: string;
+  role: string;
+  location: string;
+  salary: string;
+  status: string;
+}
 
-  const handleAIParse = async () => {
-    setLoading(true);
+const AddApplicationModal: React.FC = () => {
+  // 1. Initialize all state hooks correctly
+  const [jobDescription, setJobDescription] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
+    company: "",
+    role: "",
+    location: "",
+    salary: "",
+    status: "Pending"
+  });
+
+  // 2. The Auto-Fill Function
+  const handleAutoFill = async () => {
+    if (!jobDescription) {
+      alert("Please paste a job description first!");
+      return;
+    }
+
     try {
-      const { data } = await API.post('/applications/parse', { jdText });
-      setFormData({ ...formData, company: data.company || '', role: data.role || '' });
-    } catch (err) {
-      alert("AI Parsing failed.");
+      setLoading(true);
+      
+      // Hit the Railway backend
+      const response = await axiosInstance.post('/applications/parse', { 
+        description: jobDescription 
+      });
+
+      // 3. Destructure with default values to prevent "undefined" errors
+      const { 
+        company = "", 
+        role = "", 
+        location = "", 
+        salary = "" 
+      } = response.data;
+      
+      // 4. Update state using the previous state (best practice)
+      setFormData((prev) => ({
+        ...prev,
+        company: company,
+        role: role,
+        location: location,
+        salary: salary,
+      }));
+
+      alert("AI has filled the form!");
+    } catch (error: any) {
+      console.error("AI Autofill Error:", error);
+      alert("AI was unable to parse this. Check Railway logs for Groq errors.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = async () => {
-    try {
-      await API.post('/applications', formData);
-      onRefresh();
-      onClose();
-      setFormData({ company: '', role: '', status: 'Applied' });
-      setJdText('');
-    } catch (err) {
-      alert("Error saving job.");
-    }
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-slate-900">
-      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden">
-        <div className="p-6 border-b flex justify-between items-center">
-          <h2 className="text-xl font-black flex items-center gap-2 text-slate-800 uppercase italic">
-            <Sparkles className="text-blue-600" size={22} /> Add Job
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
-        </div>
+    <div className="p-4 border rounded-lg bg-gray-800 text-white">
+      <h2 className="text-xl font-bold mb-4">Add New Application</h2>
+      
+      {/* Description Input */}
+      <textarea
+        className="w-full p-2 bg-gray-700 rounded mb-2"
+        placeholder="Paste job description here..."
+        value={jobDescription}
+        onChange={(e) => setJobDescription(e.target.value)}
+      />
 
-        <div className="p-8 space-y-6">
-          <textarea 
-            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl h-32 text-sm outline-none focus:border-blue-500"
-            placeholder="Paste Job Description here..."
-            value={jdText}
-            onChange={(e) => setJdText(e.target.value)}
-          />
-          <button 
-            onClick={handleAIParse}
-            disabled={loading || !jdText}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-2xl font-bold hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
-            {loading ? "Analyzing..." : "Auto-Fill with AI"}
-          </button>
+      <button
+        onClick={handleAutoFill}
+        disabled={loading}
+        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded disabled:opacity-50"
+      >
+        {loading ? "AI is thinking..." : "Auto-fill with AI"}
+      </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input 
-              type="text" placeholder="Company Name" value={formData.company}
-              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500"
-              onChange={(e) => setFormData({...formData, company: e.target.value})}
-            />
-            <input 
-              type="text" placeholder="Job Title" value={formData.role}
-              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500"
-              onChange={(e) => setFormData({...formData, role: e.target.value})}
-            />
-          </div>
-          
-          <button 
-            onClick={handleSave}
-            disabled={!formData.company || !formData.role}
-            className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-slate-800 disabled:opacity-50"
-          >
-            Save Application
-          </button>
-        </div>
+      {/* Example Form Fields */}
+      <div className="mt-4 space-y-2">
+        <input 
+          placeholder="Company" 
+          className="w-full p-2 bg-gray-700"
+          value={formData.company} 
+          onChange={(e) => setFormData({...formData, company: e.target.value})}
+        />
+        <input 
+          placeholder="Role" 
+          className="w-full p-2 bg-gray-700"
+          value={formData.role} 
+          onChange={(e) => setFormData({...formData, role: e.target.value})}
+        />
       </div>
     </div>
   );
