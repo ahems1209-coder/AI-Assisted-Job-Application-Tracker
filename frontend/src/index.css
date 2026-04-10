@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* If you want that dark background we talked about */
+body {
+  background-color: #0f172a; /* This is slate-900 */
+  color: white;
+}
