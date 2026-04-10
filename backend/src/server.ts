@@ -15,7 +15,9 @@ const app = express();
 connectDB();
 
 // 4. Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'https://69d8d932756458080ed9a578--ai-job-applicationtracker.netlify.app'
+}));
 app.use(express.json());
 
 // 5. Routes
