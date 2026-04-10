@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import API from '../api/axiosInstance';
-import { X, Sparkles, Loader2, Building2, Briefcase } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 
 const AddApplicationModal = ({ isOpen, onClose, onRefresh }: any) => {
   const [jdText, setJdText] = useState('');
