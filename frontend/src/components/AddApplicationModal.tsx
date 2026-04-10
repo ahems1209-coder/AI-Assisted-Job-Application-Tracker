@@ -2,30 +2,27 @@ import  { useState } from 'react';
 import axiosInstance from '../api/axiosInstance';
 
 const AddApplicationModal = ({ onClose }: { onClose: () => void }) => {
-  const [jobDescription, setJobDescription] = useState("");
+  const [jobText, setJobText] = useState(""); // This is the state for the textarea
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    company: "",
-    role: "",
-    location: "",
-    salary: "",
-    status: "Pending"
-  });
+  const [formData, setFormData] = useState({ company: "", role: "" });
 
   const handleAutoFill = async () => {
-    if (!jobDescription.trim()) return alert("Paste a description first!");
+    if (!jobText.trim()) return alert("Please paste a description!");
+
     setLoading(true);
     try {
-      const { data } = await axiosInstance.post('/applications/parse', { description: jobDescription });
-      setFormData(prev => ({
-        ...prev,
+      // We send 'description' as the key to match the backend
+      const { data } = await axiosInstance.post('/applications/parse', { 
+        description: jobText 
+      });
+
+      setFormData({
         company: data.company || "",
-        role: data.role || "",
-        location: data.location || "",
-        salary: data.salary || ""
-      }));
-    } catch (err) {
-      alert("AI failed. Ensure GROQ_API_KEY is in Railway Variables.");
+        role: data.role || ""
+      });
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || "AI Analysis failed.");
     } finally {
       setLoading(false);
     }
@@ -34,40 +31,40 @@ const AddApplicationModal = ({ onClose }: { onClose: () => void }) => {
   const handleSave = async () => {
     try {
       await axiosInstance.post('/applications', formData);
-      alert("Saved successfully!");
+      alert("Application Saved!");
       onClose();
     } catch (err) {
-      alert("Error saving entry.");
+      alert("Save failed.");
     }
   };
 
   return (
-    <div className="modal-container bg-gray-900 p-6 rounded-2xl text-white">
+    <div className="bg-gray-900 p-6 rounded-2xl text-white">
       <h2 className="text-xl font-bold mb-4">Analyze Job Posting</h2>
       <textarea 
-        className="w-full p-3 bg-gray-800 rounded-lg mb-4"
-        rows={6}
-        value={jobDescription}
-        onChange={(e) => setJobDescription(e.target.value)}
-        placeholder="Paste details here..."
+        className="w-full p-3 bg-gray-800 rounded-lg mb-4 text-sm"
+        rows={5}
+        value={jobText}
+        onChange={(e) => setJobText(e.target.value)}
+        placeholder="Paste text here..."
       />
       <button 
         onClick={handleAutoFill} 
         disabled={loading}
-        className="w-full bg-indigo-600 py-3 rounded-xl font-bold mb-6 disabled:opacity-50"
+        className="w-full bg-indigo-600 py-3 rounded-xl font-bold mb-6"
       >
         {loading ? "Analyzing..." : "✨ Auto-Fill with AI"}
       </button>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="flex gap-4 mb-6">
         <input 
-          className="bg-gray-800 p-3 rounded-lg" 
+          className="bg-gray-800 p-3 rounded-lg w-1/2" 
           placeholder="Company"
           value={formData.company}
           onChange={(e) => setFormData({...formData, company: e.target.value})}
         />
         <input 
-          className="bg-gray-800 p-3 rounded-lg" 
+          className="bg-gray-800 p-3 rounded-lg w-1/2" 
           placeholder="Role"
           value={formData.role}
           onChange={(e) => setFormData({...formData, role: e.target.value})}
