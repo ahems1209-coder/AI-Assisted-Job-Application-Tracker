@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'ai-assisted-job-application-tracker-production.up.railway.app',
 });
 
 // Automatically attach JWT token to every request
